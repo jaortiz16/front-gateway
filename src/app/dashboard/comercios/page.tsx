@@ -22,7 +22,8 @@ import {
   ShoppingBag,
   X,
   Plus,
-  CreditCard
+  CreditCard,
+  Check
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Input } from '@/components/ui/input'
@@ -30,8 +31,24 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 
+// Definición de interfaces
+interface Comercio {
+  codigoComercio: string;
+  nombreComercial: string;
+  razonSocial: string;
+  ruc: string;
+  cuentaIban: string;
+  estado: string;
+}
+
+interface PosTerminal {
+  id: string;
+  nombre: string;
+  tipo: string;
+}
+
 // Datos de ejemplo para POS disponibles
-const posDisponibles = [
+const posDisponibles: PosTerminal[] = [
   { id: 'POS001', nombre: 'POS Terminal 1', tipo: 'Físico' },
   { id: 'POS002', nombre: 'POS Terminal 2', tipo: 'Físico' },
   { id: 'POS003', nombre: 'POS Web', tipo: 'Virtual' },
@@ -43,8 +60,8 @@ export default function ComerciosPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [modalAbierto, setModalAbierto] = useState(false)
   const [modalPosAbierto, setModalPosAbierto] = useState(false)
-  const [comercioSeleccionado, setComercioSeleccionado] = useState(null)
-  const [posAsignados, setPosAsignados] = useState({})
+  const [comercioSeleccionado, setComercioSeleccionado] = useState<Comercio | null>(null)
+  const [posAsignados, setPosAsignados] = useState<Record<string, string[]>>({})
 
   // Estado para el formulario de nuevo comercio
   const [nuevoComercio, setNuevoComercio] = useState({
@@ -75,7 +92,7 @@ export default function ComerciosPage() {
     show: { opacity: 1, y: 0 }
   }
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setNuevoComercio({
       ...nuevoComercio,
@@ -83,7 +100,7 @@ export default function ComerciosPage() {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     // Aquí iría la lógica para guardar el nuevo comercio
     console.log('Nuevo comercio:', nuevoComercio)
@@ -97,21 +114,23 @@ export default function ComerciosPage() {
     })
   }
 
-  const abrirModalPos = (comercio) => {
+  const abrirModalPos = (comercio: Comercio) => {
     setComercioSeleccionado(comercio)
     setModalPosAbierto(true)
   }
 
-  const togglePosAsignado = (posId) => {
+  const togglePosAsignado = (posId: string) => {
     setPosAsignados(prev => {
-      const posActuales = prev[comercioSeleccionado?.codigoComercio] || []
+      if (!comercioSeleccionado) return prev;
+      
+      const posActuales = prev[comercioSeleccionado.codigoComercio] || []
       const nuevosPosAsignados = posActuales.includes(posId)
         ? posActuales.filter(id => id !== posId)
         : [...posActuales, posId]
       
       return {
         ...prev,
-        [comercioSeleccionado?.codigoComercio]: nuevosPosAsignados
+        [comercioSeleccionado.codigoComercio]: nuevosPosAsignados
       }
     })
   }
@@ -237,7 +256,8 @@ export default function ComerciosPage() {
               <h4 className="font-medium mb-3 text-sm">Puntos de Venta Disponibles:</h4>
               <div className="space-y-2 max-h-[300px] overflow-y-auto p-1">
                 {posDisponibles.map((pos) => {
-                  const estaAsignado = (posAsignados[comercioSeleccionado?.codigoComercio] || []).includes(pos.id);
+                  const codigoComercio = comercioSeleccionado?.codigoComercio || '';
+                  const estaAsignado = codigoComercio ? (posAsignados[codigoComercio] || []).includes(pos.id) : false;
                   return (
                     <div 
                       key={pos.id} 
