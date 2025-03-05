@@ -18,8 +18,23 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
+// Definición de tipos
+interface Facturacion {
+  id: string;
+  codFacturacionComercio: string;
+  codComercio: string;
+  fechaInicio: string;
+  fechaFin: string;
+  transaccionesProcesadas: number;
+  codComision: string;
+  valor: number;
+  estado: string;
+  fechaFacturacion: string;
+  fechaPago: string | null;
+}
+
 // Datos de ejemplo - estos vendrían de la API real
-const facturacionesData = [
+const facturacionesData: Facturacion[] = [
   {
     id: "67c74de428c4bc30e0ce56cb",
     codFacturacionComercio: "67c74de428c4bc30e0ce56cb",
@@ -92,7 +107,13 @@ const comisiones = [
 export default function FacturacionesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<string | null>(null)
-  const [ordenacion, setOrdenacion] = useState({ campo: 'fechaFacturacion', direccion: 'desc' })
+  const [ordenacion, setOrdenacion] = useState<{ 
+    campo: keyof Facturacion, 
+    direccion: 'asc' | 'desc' 
+  }>({ 
+    campo: 'fechaFacturacion', 
+    direccion: 'desc' 
+  })
   const [modalAbierto, setModalAbierto] = useState(false)
   
   // Estado para el formulario de nueva facturación
@@ -133,7 +154,7 @@ export default function FacturacionesPage() {
     })
   }
 
-  const formatFecha = (fechaStr: string) => {
+  const formatFecha = (fechaStr: string | null | undefined) => {
     if (!fechaStr) return '—'
     return new Date(fechaStr).toLocaleDateString('es-ES')
   }
@@ -160,10 +181,10 @@ export default function FacturacionesPage() {
     }
   }
 
-  const ordenarFacturaciones = (facturaciones) => {
+  const ordenarFacturaciones = (facturaciones: Facturacion[]) => {
     return [...facturaciones].sort((a, b) => {
-      const aValue = a[ordenacion.campo]
-      const bValue = b[ordenacion.campo]
+      const aValue = a[ordenacion.campo as keyof Facturacion]
+      const bValue = b[ordenacion.campo as keyof Facturacion]
       
       if (aValue === null) return ordenacion.direccion === 'asc' ? 1 : -1
       if (bValue === null) return ordenacion.direccion === 'asc' ? -1 : 1
@@ -176,7 +197,7 @@ export default function FacturacionesPage() {
     })
   }
 
-  const actualizarOrdenacion = (campo) => {
+  const actualizarOrdenacion = (campo: keyof Facturacion) => {
     setOrdenacion(prev => ({
       campo,
       direccion: prev.campo === campo && prev.direccion === 'asc' ? 'desc' : 'asc'
